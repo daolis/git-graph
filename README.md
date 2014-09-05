@@ -10,4 +10,6 @@ Requirements
 
 Run the following to create a graph.
 
+```
 ./git-praph.py | dot -Tps -o test.ps
+```
