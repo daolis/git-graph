@@ -24,17 +24,22 @@ lines = out.split("\n")
 
 dates = {}
 messages = {}
+predefinedNodeColor = {}
 
 def log(message):
     if showLog:
         print(message, file=sys.stderr)
 
-def getCommitDiffHash(hash):
+def getCommitDiff(hash):
     # get only the changed lines (starting with + or -), no line numbers, hashes, ...
     command = 'git diff ' + hash + '^ ' + hash + ' | grep "^[-+]"'
     log("Hash Command: " + command)
     diffOutput = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
     (diff, err) = diffOutput.communicate()
+    return diff
+
+def getCommitDiffHash(hash):
+    diff = getCommitDiff(hash)
     sha = hashlib.sha1(diff.encode('utf-8'))
     return sha.hexdigest()
 
@@ -70,7 +75,13 @@ for line in lines:
 
         link = ""
         link2 = ""
-        nodeColor=COLOR_NODE
+        labelExt = ""
+        if hash in predefinedNodeColor:
+            labelExt = "\\nSTASH INDEX"
+            nodeColor = predefinedNodeColor[hash]
+
+        else:
+            nodeColor=COLOR_NODE
         if parentHash1:
             link = " \"" + parentHash1 + "\"->\"" + hash + "\";"
         else:
@@ -79,7 +90,6 @@ for line in lines:
         if parentHash2:
             link2 = " \"" + parentHash2 + "\"->\"" + hash + "\";"
 
-        labelExt = ""
         if message in messages:
             existingHash = messages[message]
             if hash is not existingHash and date > dates[existingHash]:
@@ -94,11 +104,11 @@ for line in lines:
                     nodeColor = COLOR_NODE_CHERRY_PICK
                     #labelExt = "\\nCherry Pick"
                 log("")
-        print("    \"" + hash + "\"[label=\"" + hash + labelExt + "\\n(" + user + ")\",shape=box,style=filled,fillcolor=" + nodeColor + "];" + link + link2)
+        nodeInfo = ""
         if ref:
             refEntries = ref.replace("(", "").replace(")", "").split(",")
             for refEntry in refEntries:
-                style = "shape=box,fillcolor=" + COLOR_BRANCH
+                style = "shape=oval,fillcolor=" + COLOR_BRANCH
                 if "HEAD" in refEntry:
                     style = "shape=diamond,fillcolor=" + COLOR_HEAD
                 elif "tag" in refEntry:
@@ -106,9 +116,22 @@ for line in lines:
                     style = "shape=oval,fillcolor=" + COLOR_TAG
                 elif "stash" in refEntry:
                     style = "shape=box,fillcolor=" + COLOR_STASH
-                else:
-                    if "origin" in refEntry:
-                        continue
-                print('    "' + refEntry + '"[style=filled,' + style + ']; "' + refEntry + '" -> "' + hash + '"')
+                    nodeColor = COLOR_STASH
+                    labelExt = "\\nSTASH"
+                    log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+                    if getCommitDiff(parentHash1) == "":
+                        log('>>> "' + parentHash1 + '"[color=red]')
+                        predefinedNodeColor[parentHash1] = COLOR_STASH
+                    elif getCommitDiff(parentHash2) == "":
+                        log('>>> "' + parentHash2 + '"[color=red]')
+                        predefinedNodeColor[parentHash2] = COLOR_STASH
+                    continue
+                #else:
+                    #if "origin" in refEntry:
+                    #    continue
+                nodeInfo += '    "' + refEntry + '"[style=filled,' + style + ']; "' + refEntry + '" -> "' + hash + '"\n'
+        print("    \"" + hash + "\"[label=\"" + hash + labelExt + "\\n(" + user + ")\",shape=box,style=filled,fillcolor=" + nodeColor + "];" + link + link2)
+        if nodeInfo:
+            print(nodeInfo)
 print("}")
 
