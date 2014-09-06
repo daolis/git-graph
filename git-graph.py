@@ -4,6 +4,7 @@ import subprocess
 import re
 import hashlib
 import sys
+import argparse
 
 # colors
 COLOR_NODE = "cornsilk"
@@ -14,21 +15,32 @@ COLOR_TAG = "yellow2"
 COLOR_BRANCH = "orange"
 COLOR_STASH = "red"
 
-showLog = False
+def log(message):
+    if dubug:
+        print(message, file=sys.stderr)
 
 pattern = re.compile(r'^\[(\d+)\|(.*)\|(.*)\|\s?(.*)\]\s([0-9a-f]*)\s?([0-9a-f]*)\s?([0-9a-f]*)$')
+parser = argparse.ArgumentParser()
 
-output = subprocess.Popen('git log --pretty=format:"[%ct|%cn|%s|%d] %h %p" --all', shell=True, stdout=subprocess.PIPE, universal_newlines=True)
+parser.add_argument("-x", "--debug", dest="debug", action="store_true", help="Show debug messages on stderr")
+parser.add_argument("-r", "--range", help="git commit range" )
+
+args = parser.parse_args()
+dubug = args.debug
+revRange = ""
+if args.range:
+    revRange = " " + args.range
+    log("Range: " + revRange)
+
+gitLogCommand = 'git log --pretty=format:"[%ct|%cn|%s|%d] %h %p" --all ' + revRange
+log('Git log command: ' + gitLogCommand)
+output = subprocess.Popen(gitLogCommand, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
 (out, err) = output.communicate()
 lines = out.split("\n")
 
 dates = {}
 messages = {}
 predefinedNodeColor = {}
-
-def log(message):
-    if showLog:
-        print(message, file=sys.stderr)
 
 def getCommitDiff(hash):
     # get only the changed lines (starting with + or -), no line numbers, hashes, ...
