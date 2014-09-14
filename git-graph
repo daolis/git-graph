@@ -10,23 +10,27 @@ import argparse
 COLOR_NODE = "cornsilk"
 COLOR_NODE_FIRST = "cornflowerblue"
 COLOR_NODE_CHERRY_PICK = "burlywood1"
+COLOR_NODE_REVERT = "azure4"
 COLOR_HEAD = "darkgreen"
 COLOR_TAG = "yellow2"
 COLOR_BRANCH = "orange"
 COLOR_STASH = "red"
 
 def log(message):
-    if dubug:
+    if debug:
         print(message, file=sys.stderr)
 
 pattern = re.compile(r'^\[(\d+)\|(.*)\|(.*)\|\s?(.*)\]\s([0-9a-f]*)\s?([0-9a-f]*)\s?([0-9a-f]*)$')
+revertMessagePattern = re.compile(r'Revert "(.*)"')
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument("-x", "--debug", dest="debug", action="store_true", help="Show debug messages on stderr")
+parser.add_argument("-m", "--messages", dest="messages", action="store_true", help="Show commit messages in node" )
 parser.add_argument("-r", "--range", help="git commit range" )
 
 args = parser.parse_args()
-dubug = args.debug
+debug = args.debug
 revRange = ""
 if args.range:
     revRange = " " + args.range
@@ -88,6 +92,9 @@ for line in lines:
         link = ""
         link2 = ""
         labelExt = ""
+        nodeMessage = ""
+        if args.messages:
+            nodeMessage = "\n" + message.replace("\"", "'");
         if hash in predefinedNodeColor:
             labelExt = "\\nSTASH INDEX"
             nodeColor = predefinedNodeColor[hash]
@@ -103,6 +110,7 @@ for line in lines:
             link2 = " \"" + parentHash2 + "\"->\"" + hash + "\";"
 
         if message in messages:
+            # message exists in history - possible cherry-pick -> compare diff hashes
             existingHash = messages[message]
             if hash is not existingHash and date > dates[existingHash]:
                 diffHashOld = getCommitDiffHash(existingHash)
@@ -116,13 +124,25 @@ for line in lines:
                     nodeColor = COLOR_NODE_CHERRY_PICK
                     #labelExt = "\\nCherry Pick"
                 log("")
+        log("Message: [" + message + "]")
+        if message.startswith("Revert"):
+            # check for revert
+            log("Revert commit")
+            match = re.match(revertMessagePattern, message)
+            if match:
+                originalMessage = match.group(1)
+                log("Revert match [" + originalMessage + "]")
+                origRevertHash = messages[originalMessage]
+                print('    "' + hash + '"->"' + str(origRevertHash) + '"[label="Revert",style=dotted,fontcolor="azure4",color="azure4"]')
+            nodeColor = COLOR_NODE_REVERT
+
         nodeInfo = ""
         if ref:
             refEntries = ref.replace("(", "").replace(")", "").split(",")
             for refEntry in refEntries:
                 style = "shape=oval,fillcolor=" + COLOR_BRANCH
                 if "HEAD" in refEntry:
-                    style = "shape=diamond,fillcolor=" + COLOR_HEAD
+                    style = "shape=diamond,fillcolor=" + COLOR_HEAD/home/devel/code/github/git-graph/gitGraph.iml
                 elif "tag" in refEntry:
                     refEntry = refEntry.replace("tag: ", "")
                     style = "shape=oval,fillcolor=" + COLOR_TAG
@@ -130,7 +150,6 @@ for line in lines:
                     style = "shape=box,fillcolor=" + COLOR_STASH
                     nodeColor = COLOR_STASH
                     labelExt = "\\nSTASH"
-                    log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
                     if getCommitDiff(parentHash1) == "":
                         log('>>> "' + parentHash1 + '"[color=red]')
                         predefinedNodeColor[parentHash1] = COLOR_STASH
@@ -142,7 +161,7 @@ for line in lines:
                     #if "origin" in refEntry:
                     #    continue
                 nodeInfo += '    "' + refEntry + '"[style=filled,' + style + ']; "' + refEntry + '" -> "' + hash + '"\n'
-        print("    \"" + hash + "\"[label=\"" + hash + labelExt + "\\n(" + user + ")\",shape=box,style=filled,fillcolor=" + nodeColor + "];" + link + link2)
+        print("    \"" + hash + "\"[label=\"" + hash + nodeMessage + labelExt + "\\n(" + user + ")\",shape=box,style=filled,fillcolor=" + nodeColor + "];" + link + link2)
         if nodeInfo:
             print(nodeInfo)
 print("}")

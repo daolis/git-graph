@@ -23,6 +23,7 @@ Example with range
 
 ### Parameters
 * **-x**: to print debug output to stderr
+* **-m**: show commit messages in nodes
 * **-r range**: to get a specific range of the repository. See [here](http://git-scm.com/book/en/Git-Tools-Revision-Selection#Commit-Ranges)
 
 # Example Graph
