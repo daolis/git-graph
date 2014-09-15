@@ -69,16 +69,16 @@ for line in lines:
     if match:
         date = match.group(1)
         message = match.group(3)
-        hash = match.group(5)
+        commitHash = match.group(5)
         if message in messages:
             existing = messages[message]
             #print(dates[existing]+" - "+date)
             if dates[existing] > date:
                 #print("setting message ["+message+"] with ["+hash+"]")
-                messages[message] = hash
+                messages[message] = commitHash
         else:
-            messages[message] = hash
-        dates[hash] = date
+            messages[message] = commitHash
+        dates[commitHash] = date
 
 for line in lines:
     #print(line)
@@ -88,7 +88,7 @@ for line in lines:
         user = match.group(2)
         message = match.group(3)
         ref = match.group(4)
-        hash = match.group(5)
+        commitHash = match.group(5)
         parentHash1 = match.group(6)
         parentHash2 = match.group(7)
 
@@ -98,33 +98,33 @@ for line in lines:
         nodeMessage = ""
         if args.messages:
             nodeMessage = "\n" + message.replace("\"", "'");
-        if hash in predefinedNodeColor:
+        if commitHash in predefinedNodeColor:
             labelExt = "\\nSTASH INDEX"
-            nodeColor = predefinedNodeColor[hash]
+            nodeColor = predefinedNodeColor[commitHash]
 
         else:
             nodeColor=COLOR_NODE
         if parentHash1:
-            link = " \"" + parentHash1 + "\"->\"" + hash + "\";"
+            link = " \"" + parentHash1 + "\"->\"" + commitHash + "\";"
         else:
             #initial commit
             nodeColor = COLOR_NODE_FIRST
         if parentHash2:
-            link2 = " \"" + parentHash2 + "\"->\"" + hash + "\";"
+            link2 = " \"" + parentHash2 + "\"->\"" + commitHash + "\";"
         if parentHash1 and parentHash2:
             nodeColor = COLOR_NODE_MERGE
         if message in messages:
             # message exists in history - possible cherry-pick -> compare diff hashes
             existingHash = messages[message]
-            if hash is not existingHash and date > dates[existingHash]:
+            if commitHash is not existingHash and date > dates[existingHash]:
                 diffHashOld = getCommitDiffHash(existingHash)
-                diffHashActual = getCommitDiffHash(hash)
+                diffHashActual = getCommitDiffHash(commitHash)
                 log("M [" + message + "]")
                 log("1 [" + diffHashOld + "]")
                 log("2 [" + diffHashActual + "]")
                 if diffHashOld == diffHashActual:
                     log("equal")
-                    print('    "' + str(existingHash) + '"->"' + hash + '"[label="Cherry\\nPick",style=dotted,fontcolor="red",color="red"]')
+                    print('    "' + str(existingHash) + '"->"' + commitHash + '"[label="Cherry\\nPick",style=dotted,fontcolor="red",color="red"]')
                     nodeColor = COLOR_NODE_CHERRY_PICK
                     #labelExt = "\\nCherry Pick"
                 log("")
@@ -137,7 +137,7 @@ for line in lines:
                 originalMessage = match.group(1)
                 log("Revert match [" + originalMessage + "]")
                 origRevertHash = messages[originalMessage]
-                print('    "' + hash + '"->"' + str(origRevertHash) + '"[label="Revert",style=dotted,fontcolor="azure4",color="azure4"]')
+                print('    "' + commitHash + '"->"' + str(origRevertHash) + '"[label="Revert",style=dotted,fontcolor="azure4",color="azure4"]')
             nodeColor = COLOR_NODE_REVERT
 
         nodeInfo = ""
@@ -164,8 +164,8 @@ for line in lines:
                 #else:
                     #if "origin" in refEntry:
                     #    continue
-                nodeInfo += '    "' + refEntry + '"[style=filled,' + style + ']; "' + refEntry + '" -> "' + hash + '"\n'
-        print("    \"" + hash + "\"[label=\"" + hash + nodeMessage + labelExt + "\\n(" + user + ")\",shape=box,style=filled,fillcolor=" + nodeColor + "];" + link + link2)
+                nodeInfo += '    "' + refEntry + '"[style=filled,' + style + ']; "' + refEntry + '" -> "' + commitHash + '"\n'
+        print("    \"" + commitHash + "\"[label=\"" + commitHash + nodeMessage + labelExt + "\\n(" + user + ")\",shape=box,style=filled,fillcolor=" + nodeColor + "];" + link + link2)
         if nodeInfo:
             print(nodeInfo)
 print("}")
