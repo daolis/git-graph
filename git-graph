@@ -5,6 +5,7 @@ import re
 import hashlib
 import sys
 import argparse
+import textwrap
 
 # colors
 COLOR_NODE = "cornsilk"
@@ -24,15 +25,20 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-x", "--debug", dest="debug", action="store_true", help="Show debug messages on stderr")
 parser.add_argument("-m", "--messages", dest="messages", action="store_true", help="Show commit messages in node" )
+parser.add_argument("-w", "--wrap", dest="wrapMessages", action="store_true", help="Wrap commit messages" )
+parser.add_argument("-c", "--columns", dest="wrapLimit", type=int, default=60, action="store", help="Wrap messages at column" )
 parser.add_argument("-r", "--range", help="git commit range" )
 
 args = parser.parse_args()
 debug = args.debug
 
+if args.wrapLimit < 1:
+    parser.print_help()
+    sys.exit(1)
+
 def log(message):
     if debug:
         print(message, file=sys.stderr)
-
 
 revRange = ""
 if args.range:
@@ -97,7 +103,9 @@ for line in lines:
         labelExt = ""
         nodeMessage = ""
         if args.messages:
-            nodeMessage = "\n" + message.replace("\"", "'");
+            if args.wrapMessages:
+               message = textwrap.fill(message, args.wrapLimit).replace("\n", "\\n")
+            nodeMessage = "\n" + message.replace("\"", "'")
         if commitHash in predefinedNodeColor:
             labelExt = "\\nSTASH INDEX"
             nodeColor = predefinedNodeColor[commitHash]
