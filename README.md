@@ -21,10 +21,16 @@ Example with range
 
     ./git-graph -r a51eced..HEAD | dot -Tps -o graph.ps
 
+Example with commit messages and message wrapping
+
+    ./git-graph -mwc 35 | dot -Tps -o graph.ps
+
 ### Parameters
-* **-x**: to print debug output to stderr
-* **-m**: show commit messages in nodes
-* **-r range**: to get a specific range of the repository. See [here](http://git-scm.com/book/en/Git-Tools-Revision-Selection#Commit-Ranges)
+* **-x**: To print debug output to stderr.
+* **-m**: Show commit messages in nodes.
+* **-w**: Wrap commit messages.
+* **-c column**: Column at which to start wrapping commit messages.
+* **-r range**: To get a specific range of the repository. See [here](http://git-scm.com/book/en/Git-Tools-Revision-Selection#Commit-Ranges)
 
 # Example Graph
 ![alt text](images/example.gif)
