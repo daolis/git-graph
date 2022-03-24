@@ -17,9 +17,9 @@ On linux you can use the following command to create a graph.ps file
 
     ./git-graph | dot -Tps -o graph.ps
 
-Or you can simply
+Or you can simply (the file extension must be an accepted command line option of the dot utility (see [here](https://www.graphviz.org/docs/outputs/))
 
-    ./git-graph -o image.pdf #with the extension being one of the command line option accepted by the dot utility (see [here](https://www.graphviz.org/docs/outputs/))
+    ./git-graph -o image.pdf
     
 
 Example with range
