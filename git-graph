@@ -5,6 +5,7 @@ import re
 import hashlib
 import sys
 import argparse
+import logging
 
 # colors
 COLOR_NODE = "cornsilk"
@@ -136,8 +137,12 @@ for line in lines:
             if match:
                 originalMessage = match.group(1)
                 log("Revert match [" + originalMessage + "]")
-                origRevertHash = messages[originalMessage]
-                print('    "' + commitHash + '"->"' + str(origRevertHash) + '"[label="Revert",style=dotted,fontcolor="azure4",color="azure4"]')
+                if originalMessage in messages:
+                    origRevertHash = messages[originalMessage]
+                    print('    "' + commitHash + '"->"' + str(origRevertHash) + '"[label="Revert",style=dotted,fontcolor="azure4",color="azure4"]')
+                else:
+                    logging.warning('Not able to find the original revert commit')
+                    print('    "revert_' + commitHash + '"[label="", shape=none, height=.0, width=.0]; "' + commitHash + '"->"revert_' + commitHash + '"[label="Revert ??",style=dotted,fontcolor="azure4",color="azure4"];')
             nodeColor = COLOR_NODE_REVERT
 
         nodeInfo = ""
